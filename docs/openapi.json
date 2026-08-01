@@ -1,0 +1,98 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de agendamento de salas",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/salas/reserva": {
+      "post": {
+        "summary": "Reservar uma sala de reunião",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["salaId", "inicio", "fim"],
+                "properties": {
+                  "salaId": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "inicio": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-08-01T14:00:00Z"
+                  },
+                  "fim": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-08-01T15:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reserva criada com sucesso",
+            "content": {
+              "application/json": {
+                "example": {
+                  "sucesso": true,
+                  "data": {
+                    "reservaId": 101,
+                    "salaId": 1,
+                    "funcionarioId": 5,
+                    "inicio": "2026-08-01T14:00:00Z",
+                    "fim": "2026-08-01T15:00:00Z"
+                  },
+                  "erro": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de entrada inválidos"
+          },
+          "401": {
+            "description": "Token ausente ou inválido"
+          },
+          "409": {
+            "description": "Conflito de agenda",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "data": null,
+                  "erro": [
+                    {
+                      "code": "ROOM_ALREADY_BOOKED",
+                      "menssagem": "A sala já possui uma reserva que conflita com o horário solicitado."
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
