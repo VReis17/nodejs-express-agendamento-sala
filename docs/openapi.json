@@ -1,10 +1,28 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.3",
   "info": {
-    "title": "API de agendamento de salas",
+    "title": "API de Agendamento de Salas",
     "version": "1.0.0"
   },
   "paths": {
+    "/api/salas/disponibilidade": {
+      "get": {
+        "summary": "Consulta a disponibilidade das salas",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "inicio", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" }, "example": "2026-08-01T14:00:00Z" },
+          { "name": "fim", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" }, "example": "2026-08-01T15:00:00Z" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta realizada com sucesso",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/DisponibilidadeSala" } } } }
+          },
+          "400": { "description": "Intervalo inválido" },
+          "401": { "description": "Token inválido, ausente ou expirado" }
+        }
+      }
+    },
     "/api/salas/reserva": {
       "post": {
         "summary": "Reservar uma sala de reunião",
@@ -92,6 +110,18 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "DisponibilidadeSala": {
+        "type": "object",
+        "required": ["id", "nome", "disponivel", "reservaDe"],
+        "properties": {
+          "id": { "type": "string", "example": "sala-1" },
+          "nome": { "type": "string", "example": "Sala Java" },
+          "disponivel": { "type": "boolean" },
+          "reservaDe": { "type": "string", "nullable": true, "example": "Henrique Sousa" }
+        }
       }
     }
   }
