@@ -10,4 +10,21 @@ function create(data) {
   const room = { id: randomUUID(), name, capacity, resources: Array.isArray(data.resources) ? data.resources : [], active: true };
   db.rooms.push(room); return room;
 }
-module.exports = { list, create };
+function availability({ inicio, fim }) {
+  const start = new Date(inicio);
+  const end = new Date(fim);
+
+  if (!inicio || !fim || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return { error: true };
+  }
+
+  return db.rooms.filter(room => room.active).map(room => {
+    const reservation = db.reservations.find(item => (
+      item.roomId === room.id && item.status === 'active'
+      && start < new Date(item.endAt) && end > new Date(item.startAt)
+    ));
+    const employee = reservation && db.employees.find(item => item.id === reservation.employeeId);
+    return { id: room.id, nome: room.name, disponivel: !reservation, reservaDe: employee ? employee.name : null };
+  });
+}
+module.exports = { list, create, availability };
