@@ -3,4 +3,5 @@ const controller = require('../controllers/reservationController');
 router.get('/', controller.list);
 router.post('/', controller.create);
 router.delete('/:id', controller.cancel);
+router.patch('/:id/cancelar', controller.cancel);
 module.exports = router;

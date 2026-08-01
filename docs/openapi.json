@@ -1,0 +1,197 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API de Agendamento de Salas",
+    "version": "1.0.0",
+    "description": "API REST para autenticação de funcionários e gerenciamento de salas e reservas."
+  },
+  "servers": [
+    { "url": "http://localhost:3000" }
+  ],
+  "tags": [
+    { "name": "Autenticação" },
+    { "name": "Salas" },
+    { "name": "Reservas" }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Autentica um funcionário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Funcionário autenticado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/ApiError" },
+          "401": { "$ref": "#/components/responses/ApiError" }
+        }
+      }
+    },
+    "/api/rooms": {
+      "get": {
+        "tags": ["Salas"],
+        "summary": "Lista as salas ativas",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de salas",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "rooms": { "type": "array", "items": { "$ref": "#/components/schemas/Room" } } } } } }
+          },
+          "401": { "$ref": "#/components/responses/ApiError" }
+        }
+      },
+      "post": {
+        "tags": ["Salas"],
+        "summary": "Cria uma sala (somente gerente)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateRoomRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Sala criada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Room" } } } },
+          "400": { "$ref": "#/components/responses/ApiError" },
+          "401": { "$ref": "#/components/responses/ApiError" },
+          "403": { "$ref": "#/components/responses/ApiError" },
+          "409": { "$ref": "#/components/responses/ApiError" }
+        }
+      }
+    },
+    "/api/rooms/availability": {
+      "get": {
+        "tags": ["Salas"],
+        "summary": "Consulta salas disponíveis em um período",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "date", "required": true, "schema": { "type": "string", "format": "date" } },
+          { "in": "query", "name": "startTime", "required": true, "schema": { "type": "string", "example": "09:00" } },
+          { "in": "query", "name": "endTime", "required": true, "schema": { "type": "string", "example": "10:00" } },
+          { "in": "query", "name": "capacity", "required": false, "schema": { "type": "integer", "minimum": 1 } }
+        ],
+        "responses": {
+          "200": { "description": "Salas disponíveis", "content": { "application/json": { "schema": { "type": "object", "properties": { "rooms": { "type": "array", "items": { "$ref": "#/components/schemas/Room" } } } } } } },
+          "400": { "$ref": "#/components/responses/ApiError" },
+          "401": { "$ref": "#/components/responses/ApiError" }
+        }
+      }
+    },
+    "/api/reservations": {
+      "get": {
+        "tags": ["Reservas"],
+        "summary": "Lista as reservas visíveis ao funcionário",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Lista de reservas", "content": { "application/json": { "schema": { "type": "object", "properties": { "reservations": { "type": "array", "items": { "$ref": "#/components/schemas/Reservation" } } } } } } },
+          "401": { "$ref": "#/components/responses/ApiError" }
+        }
+      },
+      "post": {
+        "tags": ["Reservas"],
+        "summary": "Cria uma reserva com status ATIVA",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateReservationRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Reserva criada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Reservation" } } } },
+          "400": { "$ref": "#/components/responses/ApiError" },
+          "401": { "$ref": "#/components/responses/ApiError" },
+          "404": { "$ref": "#/components/responses/ApiError" },
+          "409": { "$ref": "#/components/responses/ApiError" }
+        }
+      }
+    },
+    "/api/reservas/{id}/cancelar": {
+      "patch": {
+        "tags": ["Reservas"],
+        "summary": "Cancela uma reserva do funcionário autenticado",
+        "description": "Altera somente o status para CANCELADA e mantém o registro da reserva.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reserva cancelada",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CancelReservationResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/ApiError" },
+          "403": { "$ref": "#/components/responses/BusinessError" },
+          "404": { "$ref": "#/components/responses/BusinessError" },
+          "409": { "$ref": "#/components/responses/BusinessError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "responses": {
+      "ApiError": {
+        "description": "Erro da API",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      },
+      "BusinessError": {
+        "description": "Erro da regra de cancelamento",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BusinessError" } } }
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": { "email": { "type": "string", "format": "email" }, "password": { "type": "string", "format": "password" } }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" }, "tokenType": { "type": "string", "example": "Bearer" }, "expiresIn": { "type": "string", "example": "1h" },
+          "user": { "type": "object", "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "email": { "type": "string" }, "role": { "type": "string", "enum": ["manager", "employee"] } } }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "capacity": { "type": "integer" }, "resources": { "type": "array", "items": { "type": "string" } }, "active": { "type": "boolean" } }
+      },
+      "CreateRoomRequest": {
+        "type": "object", "required": ["name", "capacity"],
+        "properties": { "name": { "type": "string" }, "capacity": { "type": "integer", "minimum": 1 }, "resources": { "type": "array", "items": { "type": "string" } } }
+      },
+      "Reservation": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }, "salaId": { "type": "string" }, "funcionarioId": { "type": "string" },
+          "dataInicio": { "type": "string", "format": "date-time" }, "dataFim": { "type": "string", "format": "date-time" },
+          "status": { "type": "string", "enum": ["ATIVA", "CANCELADA"] }, "titulo": { "type": "string" }, "criadaEm": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateReservationRequest": {
+        "type": "object", "required": ["roomId", "title", "date", "startTime", "endTime"],
+        "properties": {
+          "roomId": { "type": "string" }, "title": { "type": "string" }, "date": { "type": "string", "format": "date" },
+          "startTime": { "type": "string", "example": "09:00" }, "endTime": { "type": "string", "example": "10:00" }
+        }
+      },
+      "CancelReservationResponse": {
+        "type": "object",
+        "properties": {
+          "mensagem": { "type": "string", "example": "Reserva cancelada com sucesso." },
+          "reserva": { "type": "object", "properties": { "id": { "type": "string" }, "status": { "type": "string", "enum": ["CANCELADA"] } } }
+        }
+      },
+      "ApiError": { "type": "object", "properties": { "error": { "type": "object", "properties": { "message": { "type": "string" } } } } },
+      "BusinessError": { "type": "object", "properties": { "erro": { "type": "string" } } }
+    }
+  }
+}
