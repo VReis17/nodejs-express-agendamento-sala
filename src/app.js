@@ -1,0 +1,13 @@
+const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const openapi = require('../docs/openapi.json');
+const { notFound, errorHandler } = require('./middlewares/errorHandler');
+const app = express();
+app.disable('x-powered-by');
+app.use(express.json({ limit: '20kb' }));
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapi));
+app.use('/api', require('./routes'));
+app.use(notFound);
+app.use(errorHandler);
+module.exports = app;
