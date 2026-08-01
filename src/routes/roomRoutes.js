@@ -4,5 +4,6 @@ const reservations = require('../controllers/reservationController');
 const { authorize } = require('../middlewares/auth');
 router.get('/', controller.list);
 router.get('/availability', reservations.availability);
+router.get('/disponibilidade', controller.availability);
 router.post('/', authorize('manager'), controller.create);
 module.exports = router;
